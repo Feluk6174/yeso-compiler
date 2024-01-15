@@ -1,0 +1,7 @@
+out
+out.asm
+out.o
+test.yeso
+.vscode/
+__pycache__/
+testing/

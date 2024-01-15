@@ -1,0 +1,14 @@
+{
+    "n": {
+        "type": "u8",
+        "rel_pos": 0
+    },
+    "n1": {
+        "type": "u8",
+        "rel_pos": 1
+    },
+    "nn": {
+        "type": "u8",
+        "rel_pos": 2
+    }
+}
