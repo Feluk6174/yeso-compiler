@@ -1,1 +1,1 @@
-__all__ = ["unsigned"]
+__all__ = ["unsigned", "array"]
