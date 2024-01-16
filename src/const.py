@@ -8,6 +8,12 @@ SIZES = {
     "none": 0,
 }
 
+def get_part_type(vars:dict, var:str) -> str:
+    if var in vars.keys():
+        return vars[var]["type"]
+    elif var.split(":")[0] in vars.keys():
+        return vars[var.split(":")[0]]["type"].split(":")[1]
+
 def get_part_size(vars:dict, var:str) -> int:
     if var in vars.keys():
         return SIZES[vars[var]["type"]]

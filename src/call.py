@@ -1,4 +1,6 @@
-from const import BUILTIN, EXPECTED, SIZES, ASM_TYPES
+import data_types.unsigned as unsigned
+import data_types.array as array
+from const import BUILTIN, EXPECTED, SIZES, ASM_TYPES, get_part_size, get_part_type
 from base import get_register
 from error import UnknownFunction, WrongReturnType, MismatchedArguments, WrongArgument
 
@@ -9,22 +11,20 @@ def parse_none_call(tokens, vars, function_dict) -> str:
             if i < 2:
                 continue
             
-            if arg not in vars.keys():
+            if unsigned.is_num(arg):
                 asm += f"""
 mov {get_register("b", SIZES[function_dict[tokens[1]]["vars"][list(function_dict[tokens[1]]["vars"].keys())[i-2]]["type"]])}, {arg}
 mov {ASM_TYPES[SIZES[function_dict[tokens[1]]["vars"][list(function_dict[tokens[1]]["vars"].keys())[i-2]]["type"]]]}[mem+rdi], {get_register("b", SIZES[function_dict[tokens[1]]["vars"][list(function_dict[tokens[1]]["vars"].keys())[i-2]]["type"]])}
 add rdi, {SIZES[function_dict[tokens[1]]["vars"][list(function_dict[tokens[1]]["vars"].keys())[i-2]]["type"]]}
 """
 
-            else:
-                if vars[arg]["type"] not in EXPECTED[function_dict[tokens[1]]["vars"][list(function_dict[tokens[1]]["vars"].keys())[i-2]]["type"]]: raise WrongArgument(f"{i-1}th argument of {tokens[1]}", EXPECTED[function_dict[tokens[1]]["return"]], tokens, -1)
+            elif unsigned.is_var(arg, vars):
+                if get_part_type(vars, arg) not in EXPECTED[function_dict[tokens[1]]["vars"][list(function_dict[tokens[1]]["vars"].keys())[i-2]]["type"]]: raise WrongArgument(f"{i-1}th argument of {tokens[1]}", EXPECTED[function_dict[tokens[1]]["return"]], tokens, -1)
                 
                 asm += f"""
-mov rax, {vars[arg]["rel_pos"]}
-lea rsi, [r15+rax]
-mov {get_register("b", SIZES[vars[arg]["type"]])}, {ASM_TYPES[SIZES[vars[arg]["type"]]]}[mem+rsi]
-mov {ASM_TYPES[SIZES[vars[arg]["type"]]]}[mem+rdi], {get_register("b", SIZES[vars[arg]["type"]])}
-add rdi, {SIZES[vars[arg]["type"]]}
+{unsigned.load_variable(vars, arg, get_register("b", get_part_size(vars, arg)))}
+mov {ASM_TYPES[get_part_size(vars, arg)]}[mem+rdi], {get_register("b", get_part_size(vars, arg))}
+add rdi, {get_part_size(vars, arg)}
 """
         asm += f"""
 pop rdi
@@ -44,17 +44,15 @@ call {tokens[1]}
             if i < 2:
                 continue
 
-            if arg not in vars.keys():
+            if unsigned.is_num(arg):
                 asm += f'\nmov {BUILTIN[tokens[1]]["regs"][i-2]}, {arg}\n'
 
-            else:
-                if vars[arg]["type"] not in EXPECTED[BUILTIN[tokens[1]]["args"][i-2]]: raise WrongArgument(f"{i-1}th argument of {tokens[1]}", EXPECTED[BUILTIN[tokens[1]]["args"][i-2]], tokens, -1)
+            elif unsigned.is_var(arg, vars):
+                if get_part_type(vars, arg) not in EXPECTED[BUILTIN[tokens[1]]["args"][i-2]]: raise WrongArgument(f"{i-1}th argument of {tokens[1]}", EXPECTED[BUILTIN[tokens[1]]["args"][i-2]], tokens, -1)
                 
                 asm += f"""
-mov r14, {vars[arg]["rel_pos"]}
-lea rsi, [r15+r14]
-mov {get_register(14, SIZES[vars[arg]["type"]])}, {ASM_TYPES[SIZES[vars[arg]["type"]]]}[mem+rsi]
-mov {BUILTIN[tokens[1]]["regs"][i-2]}, {get_register(14, SIZES[vars[arg]["type"]])}
+{unsigned.load_variable(vars, arg, get_register(14, get_part_size(vars, arg)))}
+mov {BUILTIN[tokens[1]]["regs"][i-2]}, {get_register(14, get_part_size(vars, arg))}
 """
         asm += f"\ncall {tokens[1]}\n"
 

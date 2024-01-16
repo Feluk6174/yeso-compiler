@@ -2,6 +2,9 @@ from error import WrongType, WrongSize
 from const import ASM_TYPES, SIZES, get_part_size
 from base import get_register
 
+def is_var(var, vars):
+    return vars[var]["type"][:5] == "list:"
+
 def get_array_var_size(vars:dict, variable:str):
     var, idx = variable.split(":")
     if idx == "len":
