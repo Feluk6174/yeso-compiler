@@ -1,4 +1,4 @@
-from const import SIZES, ASM_TYPES, TYPES, EXPECTED, BUILTIN, UNSIGNED, get_part_size
+from const import SIZES, ASM_TYPES, TYPES, EXPECTED, BUILTIN, UNSIGNED, get_part_size, get_part_type
 from base import get_register
 from error import WrongSize, UnknownVariable, WrongArgument, UnknownFunction
 from data_types.array import load_unsigned_from_list, store_unsigned_in_list, store_imediate_in_list
@@ -262,22 +262,20 @@ def call_asign(tokens:list[str], vars:dict, function_dict:dict) -> str:
             if i < 5:
                 continue
             
-            if arg not in vars.keys():
+            if is_num(arg):
                 asm += f"""
 mov {get_register("b", SIZES[function_dict[tokens[4]]["vars"][list(function_dict[tokens[4]]["vars"].keys())[i-5]]["type"]])}, {arg}
 mov {ASM_TYPES[SIZES[function_dict[tokens[4]]["vars"][list(function_dict[tokens[4]]["vars"].keys())[i-5]]["type"]]]}[mem+rdi], {get_register("b", SIZES[function_dict[tokens[4]]["vars"][list(function_dict[tokens[4]]["vars"].keys())[i-5]]["type"]])}
 add rdi, {SIZES[function_dict[tokens[4]]["vars"][list(function_dict[tokens[4]]["vars"].keys())[i-5]]["type"]]}
 """
 
-            else:
-                if vars[arg]["type"] not in EXPECTED[function_dict[tokens[4]]["return"]]: raise WrongArgument(f"{i-1}th argument of {tokens[1]}", EXPECTED[function_dict[tokens[4]]["return"]], tokens, -1)
+            elif is_var(arg, vars):
+                if get_part_type(vars, arg) not in EXPECTED[function_dict[tokens[4]]["return"]]: raise WrongArgument(f"{i-1}th argument of {tokens[1]}", EXPECTED[function_dict[tokens[4]]["return"]], tokens, -1)
                 
                 asm += f"""
-mov rax, {vars[arg]["rel_pos"]}
-lea rsi, [r15+rax]
-mov {get_register("b", SIZES[vars[arg]["type"]])}, {ASM_TYPES[SIZES[vars[arg]["type"]]]}[mem+rsi]
-mov {ASM_TYPES[SIZES[vars[arg]["type"]]]}[mem+rdi], {get_register("b", SIZES[vars[arg]["type"]])}
-add rdi, {SIZES[vars[arg]["type"]]}
+{load_variable(vars, arg, get_register("b", get_part_size(vars, arg)))}
+mov {ASM_TYPES[get_part_size(vars, arg)]}[mem+rdi], {get_register("b", get_part_size(vars, arg))}
+add rdi, {get_part_size(vars, arg)}
 """
         asm += f"""
 pop rdi
