@@ -5,3 +5,4 @@ test.yeso
 .vscode/
 __pycache__/
 testing/
+test.py

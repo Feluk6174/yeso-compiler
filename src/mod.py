@@ -6,7 +6,7 @@ import data_types.unsigned as unsigned
 def parse_mod(tokens:list[str], vars:dict, func_dict) -> str:
     if tokens[2] in vars.keys(): raise UnknownVariable(tokens[2], tokens, -1)
 
-    if vars[tokens[1]]["type"] in UNSIGNED:
+    if unsigned.is_var(tokens[1], vars):
         if tokens[3] == "call":
             return unsigned.call_asign(tokens, vars, func_dict)
 

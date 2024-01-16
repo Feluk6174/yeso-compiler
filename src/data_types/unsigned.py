@@ -1,15 +1,18 @@
-from const import SIZES, ASM_TYPES, TYPES, EXPECTED, BUILTIN, get_part_size
+from const import SIZES, ASM_TYPES, TYPES, EXPECTED, BUILTIN, UNSIGNED, get_part_size
 from base import get_register
 from error import WrongSize, UnknownVariable, WrongArgument, UnknownFunction
-from data_types.array import load_unsigned_from_list
+from data_types.array import load_unsigned_from_list, store_unsigned_in_list, store_imediate_in_list
 
 def store_immediate(vars:dict, val:int, variable_name:str):
-    return f"""
+    if variable_name in vars:
+        return f"""
 mov {get_register("a", SIZES[vars[variable_name]["type"]])}, {val}
 mov rbx, {vars[variable_name]["rel_pos"]}
 lea rsi, [r15+rbx]
 mov {ASM_TYPES[SIZES[vars[variable_name]["type"]]]}[mem+rsi], {get_register("a", SIZES[vars[variable_name]["type"]])}
 """
+    elif variable_name.split(":")[0] in vars:
+        return store_imediate_in_list(vars, val, variable_name)
 
 def load_variable(vars:dict, variable:str, register:str):
     """
@@ -25,12 +28,16 @@ mov {register}, {ASM_TYPES[SIZES[vars[variable]["type"]]]}[mem+rsi]"""
 
 def store_variable(vars:dict, variable:str, register:str):
     """
-    WARNING overwrites rcx and r10
+    WARNING overwrites rsi and r14
     """
-    return f"""mov rcx, {vars[variable]["rel_pos"]}
-lea r10, [r15+rcx]
-mov {ASM_TYPES[SIZES[vars[variable]["type"]]]}[mem+r10], {register}"""
+    if variable in vars:
+        return f"""mov r14, {vars[variable]["rel_pos"]}
+lea rsi, [r15+r14]
+mov {ASM_TYPES[SIZES[vars[variable]["type"]]]}[mem+rsi], {register}"""
 
+    elif variable.split(":")[0] in vars:
+        return store_unsigned_in_list(vars, variable, register)
+        
 
 
 def define_asm(tokens, vars) -> tuple[str, dict]:
@@ -74,7 +81,10 @@ def is_num(token:str):
     
 
 def is_var(token:str, vars:dict):
-    return token.split(":")[0] in vars.keys()
+    var = token.split(":")[0]
+    if not var in vars.keys(): return False
+    if token in vars.keys(): return vars[var]["type"] in UNSIGNED
+    else: return vars[var]["type"].split(":")[1] in UNSIGNED
 
 
 

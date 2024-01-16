@@ -1,5 +1,5 @@
 from error import WrongType, WrongSize
-from const import ASM_TYPES, SIZES
+from const import ASM_TYPES, SIZES, get_part_size
 from base import get_register
 
 def get_array_var_size(vars:dict, variable:str):
@@ -7,6 +7,71 @@ def get_array_var_size(vars:dict, variable:str):
     if idx == "len":
         return SIZES["u64"]
     return SIZES[vars[var]["type"].split(":")[1]]
+
+
+def store_unsigned_in_list(vars:dict, variable:str, register:str):
+    _, T, num = vars[variable.split(":")[0]]["type"].split(":")
+    var, idx = variable.split(":")
+    if idx in vars.keys(): 
+        return f"""
+mov r14, {vars[idx]["rel_pos"]}
+lea rsi, [r15+r14]
+mov r13, QWORD[mem+rsi]
+mov r14, {vars[var]["rel_pos"]}
+lea rsi, QWORD[r15+r14]
+mov r14, QWORD[mem+rsi]
+sub r14, 1
+cmp r13, r14
+jg panic_program
+{f"shl r13, {SIZES[T]//2}" if not SIZES[T] == 1 else ""}
+mov r14, {vars[var]["rel_pos"]}
+add r13, 8
+lea rsi, [r15+r13]
+add rsi, r14
+mov {ASM_TYPES[SIZES[T]]}[mem+rsi], {register}
+"""
+
+    if int(idx) < int(num): 
+        return f"""
+mov r14, {vars[var]["rel_pos"]+int(idx)*SIZES[T]+8}
+lea rsi, [r15+r14]
+mov {ASM_TYPES[SIZES[T]]}[mem+rsi], {register}"""
+
+    raise IndexError(f"Variable {var} has only {num} entries, (< {idx})")
+
+
+def store_imediate_in_list(vars:dict, val:int, variable_name:str):
+    _, T, num = vars[variable_name.split(":")[0]]["type"].split(":")
+    var, idx = variable_name.split(":")
+    if idx in vars.keys(): 
+        return f"""
+mov {get_register("a", SIZES[T])}, {val}
+mov r14, {vars[idx]["rel_pos"]}
+lea rsi, [r15+r14]
+mov r13, QWORD[mem+rsi]
+mov r14, {vars[var]["rel_pos"]}
+lea rsi, QWORD[r15+r14]
+mov r14, QWORD[mem+rsi]
+sub r14, 1
+cmp r13, r14
+jg panic_program
+{f"shl r13, {SIZES[T]//2}" if not SIZES[T] == 1 else ""}
+mov r14, {vars[var]["rel_pos"]}
+add r13, 8
+lea rsi, [r15+r13]
+add rsi, r14
+mov {ASM_TYPES[SIZES[T]]}[mem+rsi], {get_register("a", SIZES[T])}
+"""
+
+    if int(idx) < int(num): 
+        return f"""
+mov {get_register("a", SIZES[T])}, {val}
+mov r14, {vars[var]["rel_pos"]+int(idx)*SIZES[T]+8}
+lea rsi, [r15+r14]
+mov {ASM_TYPES[SIZES[T]]}[mem+rsi], {get_register("a", SIZES[T])}"""
+
+    raise IndexError(f"Variable {var} has only {num} entries, (< {idx})")
+
 
 def load_unsigned_from_list(vars:dict, variable:str, register:str):
     _, T, num = vars[variable.split(":")[0]]["type"].split(":")
@@ -40,7 +105,7 @@ mov {register}, {ASM_TYPES[SIZES[T]]}[mem+rsi]
 """
     if int(idx) < int(num):
         return f"""
-mov r14, {vars[var]["rel_pos"]+int(idx)*SIZES[T]+1}
+mov r14, {vars[var]["rel_pos"]+int(idx)*SIZES[T]+8}
 lea rsi, [r15+r14]
 mov {register}, {ASM_TYPES[SIZES[T]]}[mem+rsi]"""
 

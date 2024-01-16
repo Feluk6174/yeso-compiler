@@ -1,0 +1,11 @@
+func none main
+    def u64 i = 0
+    def list:u8:12 s = "Hello world!"
+    def u64 len = s:len
+    def u8 a = 0
+
+    while i < len {
+        mod a = s:i
+        call print_char a
+        mod i = i + 1
+    }
