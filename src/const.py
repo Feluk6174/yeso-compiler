@@ -10,12 +10,21 @@ SIZES = {
 
 def get_part_type(vars:dict, var:str) -> str:
     if var in vars.keys():
+        if vars[var]["type"][0] == "*":
+            return vars[var]["type"][1:]
         return vars[var]["type"]
+
     elif var.split(":")[0] in vars.keys():
         return vars[var.split(":")[0]]["type"].split(":")[1]
 
+def get_type(vars:dict, var:str) -> str:
+    return vars[var]["type"]
+
+
 def get_part_size(vars:dict, var:str) -> int:
     if var in vars.keys():
+        if vars[var]["type"][0] == "*":
+            return SIZES[vars[var]["type"][1:]]
         return SIZES[vars[var]["type"]]
     elif var.split(":")[0] in vars.keys():
         return get_array_var_size(vars, var)
@@ -23,9 +32,12 @@ def get_part_size(vars:dict, var:str) -> int:
 def get_size(T) -> int:
     if T in SIZES.keys():
         return SIZES[T]
+    elif T[0] == "*":
+        return 8
     elif T[:5] == "list:":
         _, T, num = T.split(":")
         return SIZES[T] * int(num) + 8
+
 
 ASM_TYPES = {
     1: "BYTE",

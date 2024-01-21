@@ -1,10 +1,13 @@
-from const import SIZES, ASM_TYPES, TYPES, EXPECTED, BUILTIN, UNSIGNED, get_part_size, get_part_type
+from const import SIZES, ASM_TYPES, TYPES, EXPECTED, BUILTIN, UNSIGNED, get_part_size, get_part_type, get_type
 from base import get_register
 from error import WrongSize, UnknownVariable, WrongArgument, UnknownFunction
 from data_types.array import load_unsigned_from_list, store_unsigned_in_list, store_imediate_in_list
+from data_types.pointer import store_unsigned_pointer, load_unsigned_pointer, store_unsigned_immediate_pointer
 
 def store_immediate(vars:dict, val:int, variable_name:str):
     if variable_name in vars:
+        if get_type(vars, variable_name)[0] == "*":
+            return store_unsigned_immediate_pointer(vars, val, variable_name)
         return f"""
 mov {get_register("a", SIZES[vars[variable_name]["type"]])}, {val}
 mov rbx, {vars[variable_name]["rel_pos"]}
@@ -19,6 +22,9 @@ def load_variable(vars:dict, variable:str, register:str):
     WARNING overwrites r14 and rsi (i if list index is a variable r13)
     """
     if variable in vars:
+        if get_type(vars, variable)[0] == "*":
+            return load_unsigned_pointer(vars, variable, register)
+
         return f"""mov r14, {vars[variable]["rel_pos"]}
 lea rsi, [r15+r14]
 mov {register}, {ASM_TYPES[SIZES[vars[variable]["type"]]]}[mem+rsi]"""
@@ -26,11 +32,14 @@ mov {register}, {ASM_TYPES[SIZES[vars[variable]["type"]]]}[mem+rsi]"""
     elif variable.split(":")[0] in vars:
         return load_unsigned_from_list(vars, variable, register)
 
+
 def store_variable(vars:dict, variable:str, register:str):
     """
     WARNING overwrites rsi and r14
     """
     if variable in vars:
+        if get_type(vars, variable)[0] == "*":
+            return store_unsigned_pointer(vars, variable, register)
         return f"""mov r14, {vars[variable]["rel_pos"]}
 lea rsi, [r15+r14]
 mov {ASM_TYPES[SIZES[vars[variable]["type"]]]}[mem+rsi], {register}"""
@@ -83,8 +92,7 @@ def is_num(token:str):
 def is_var(token:str, vars:dict):
     var = token.split(":")[0]
     if not var in vars.keys(): return False
-    if token in vars.keys(): return vars[var]["type"] in UNSIGNED
-    else: return vars[var]["type"].split(":")[1] in UNSIGNED
+    if token in vars.keys(): return get_part_type(vars, token) in UNSIGNED
 
 
 
