@@ -1,0 +1,60 @@
+func none stdin
+    asm
+get_char:
+    push rcx
+    push rax
+    push rbx
+    mov rax, 0      ; syscall for sysread
+    mov rdi, 0      ; stdin file descriptor
+    mov rsi, rsp    ; bytes to write (by reference?)
+    mov rdx, 1      ; number of bytes to write
+    syscall         ; call syscall
+    pop rbx
+    pop rax
+    pop rcx
+    ret
+
+get_num:
+    xor rax, rax
+    get_num_loop:
+    mov rcx, 10
+    call get_char
+    cmp bl, 0x0a
+    je fi_get_num
+    cmp bl, 0x20
+    je fi_get_num
+    
+    sub rbx, 48
+    mul rcx
+    
+    add rax, rbx
+    jmp get_num_loop
+
+    fi_get_num:
+    ret
+
+    asm
+
+func none main
+    def u64 n = 0
+    def u64 temp = 0
+    def u8 space = 32
+    asm
+        call get_num
+    asm
+
+    store rax n
+    
+    while n != 1 {
+        mod temp = n % 2
+        call print_u64 n
+        call print_char space
+        if temp == 0 {
+            mod n = n / 2
+        }
+        if temp == 1 {
+            mod n = n * 3
+            mod n = n + 1
+        }
+    }
+    call print_u64 n

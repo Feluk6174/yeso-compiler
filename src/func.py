@@ -6,6 +6,9 @@ from call import parse_none_call
 from ret import return_asm
 from condition import parse_if, parse_brakets
 from loop import parse_while
+from assembly import store_register
+
+ASM_MODE = False
 
 def parse_functions(code: str, prev_dict:dict={}):
     """Parses the code into functions
@@ -63,12 +66,25 @@ Returns a function_dict, with the function information
         
 
 def parse_function(name:str, code:list[str], function_dict:dict, global_keywords:dict[str, int], vars:dict) -> str:
+    global ASM_MODE
     asm = ""
     condition_stack = []
     for line in code:
         tokens = line.split()
-        if tokens[0] == "mod":
+        if ASM_MODE:
+            if tokens[0] == "asm":
+                asm += "\n"
+                ASM_MODE = False
+            else:
+                asm += " ".join(tokens)
+                asm += "\n"
+        elif tokens[0] == "asm":
+            asm += "\n"
+            ASM_MODE = True
+
+        elif tokens[0] == "mod":
             asm += parse_mod(tokens, vars, function_dict)
+
         elif tokens[0] == "def":
             new_asm, vars = parse_def(tokens, vars)
             asm += new_asm
@@ -87,6 +103,9 @@ def parse_function(name:str, code:list[str], function_dict:dict, global_keywords
 
         elif tokens[0] == "return":
             asm += return_asm(tokens, vars, function_dict, name)
+
+        elif tokens[0] == "store":
+            asm += store_register(tokens, vars)
 
         elif tokens[0] == "//":
             pass
