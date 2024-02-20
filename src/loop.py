@@ -10,6 +10,6 @@ def parse_while(tokens:list[str], vars:dict, condition_stack:list, global_keywor
     condition_stack.pop()
     global_keywords["if"] -= 1
     asm = "\n".join(asm.split("\n")[:-2])+"\n"
-    asm += f"{JMP_OPS[tokens[2]]} {while_tag+'_end'}"
+    asm += f"{JMP_OPS[tokens[2]]} {while_tag+'_end'}\n"
 
     return asm

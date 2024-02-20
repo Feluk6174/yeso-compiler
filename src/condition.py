@@ -58,5 +58,5 @@ def parse_brakets(tokens:list[str], condition_stack:list):
 jmp {label}
 {label}_end:
         """
-    return f"""{label}:"""
+    return f"""\n{label}:\n"""
 

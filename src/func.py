@@ -27,7 +27,7 @@ Returns a function_dict, with the function information
         function_dict (dict): contains the information of the functions
     """
 
-    function_list = code.split("\nfunc")
+    function_list = [func for func in code.split("\nfunc") if not func == ""]
     function_dict = prev_dict
     pos = 0
     for function in function_list:

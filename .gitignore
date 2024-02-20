@@ -6,3 +6,5 @@ test.yeso
 __pycache__/
 testing/
 test.py
+*.asm
+./*.yeso
