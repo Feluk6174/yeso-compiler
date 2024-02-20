@@ -2,7 +2,7 @@
 A compiler for yeso, a language i created for fun.
 
 ## Documentation
-
+Documentation and examples can be found in  the docs folder.
 ## Try it
 
 To generate asembly run:
